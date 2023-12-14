@@ -61,8 +61,10 @@ os.mkdir(new_dir)
 
 src_dir = f"{new_dir}/src"
 public_dir = f"{new_dir}/public"
+prisma_dir = f"{new_dir}/prisma"
 
 os.mkdir(src_dir)
+os.mkdir(prisma_dir)
 
 configs_dir = f"{src_dir}/configs"
 utils_dir = f"{src_dir}/utils"
@@ -90,17 +92,19 @@ package_json["name"] = project_name
 with open("test/package.json", "w") as file:
     json.dump(package_json, file)
 
+def curl_file(directory, file):
+    command = f"cd {users_dir}/{directory}; wget {file}"
+    os.system(command)
+
 cmd = f'cd {project_name}; npm i {dependencies}; npm i {devDependencies} --save-dev'
 os.system(cmd)
 
 
 for file in user_files:
-    command = f"cd {users_dir}/controllers; wget {file}"
-    os.system(command)
+    curl_file("controllers", file)
     
 for file in helper_files:
-    command = f"cd {users_dir}/helpers; wget {file}"
-    os.system(command)
+    curl_file("helpers", file)
 
 for file in root_directory_files:
     command = f"cd {project_name}; wget {file}"
@@ -110,6 +114,48 @@ user_routes_file = "https://github.com/IamTyrone/Mviyo-Express-Bootcamp/raw/main
 command = f"cd {users_dir}/routes; wget {user_routes_file}"
 os.system(command)
 
-entry_file = "https://github.com/IamTyrone/Mviyo-Express-Bootcamp/raw/main/src/index.ts"
-command = f"cd {project_name}/src; wget {entry_file}"
+
+auth_middleware_file = "https://github.com/IamTyrone/Mviyo-Express-Bootcamp/raw/main/src/middleware/authenticate.ts"
+command = f"cd {middleware_dir}; wget {auth_middleware_file}"
 os.system(command)
+
+runner_file = "https://github.com/IamTyrone/Mviyo-Express-Bootcamp/raw/main/run.sh"
+command = f"cd {project_name}; wget {runner_file}"
+os.system(command)
+
+schema_file = "https://github.com/IamTyrone/Mviyo-Express-Bootcamp/raw/main/prisma/schema.prisma"
+command = f"cd {prisma_dir}; wget {schema_file}"
+os.system(command)
+
+
+entry_point_code = """// https://blog.logrocket.com/how-to-set-up-node-typescript-express/
+
+// ? Tutorial for initializing Express with TypeScript.
+
+import express from "express";
+import dotenv from "dotenv";
+import { PrismaClient } from "@prisma/client";
+import userRoutes from "./users/routes";
+
+export const prisma = new PrismaClient();
+
+dotenv.config();
+
+const app = express();
+const port = process.env.PORT || 9000;
+
+app.use(express.json());
+
+app.use("/api/v1/users", userRoutes);
+
+app.listen(port, () => {
+  console.log(`[server]: Server is running at http://localhost:${port}`);
+});"""
+
+f = open(f"{project_name}/src/index.ts", "w")
+f.write(entry_point_code)
+f.close()
+
+os.system(f"chmod +x {project_name}/run.sh")
+
+os.system(f"cd {project_name}; docker-compose up")
