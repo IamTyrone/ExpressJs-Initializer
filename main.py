@@ -64,7 +64,6 @@ public_dir = f"{new_dir}/public"
 prisma_dir = f"{new_dir}/prisma"
 
 os.mkdir(src_dir)
-os.mkdir(prisma_dir)
 
 configs_dir = f"{src_dir}/configs"
 utils_dir = f"{src_dir}/utils"
@@ -124,8 +123,15 @@ command = f"cd {project_name}; wget {runner_file}"
 os.system(command)
 
 schema_file = "https://github.com/IamTyrone/Mviyo-Express-Bootcamp/raw/main/prisma/schema.prisma"
+os.system(f"cd {project_name};npx prisma init --datasource-provider sqlite")
+os.remove(f"{prisma_dir}/schema.prisma")
+
 command = f"cd {prisma_dir}; wget {schema_file}"
 os.system(command)
+
+os.system(f"cd {prisma_dir};npx prisma migrate dev --name init")
+
+os.system(f"cd {prisma_dir};prisma generate")
 
 
 entry_point_code = """// https://blog.logrocket.com/how-to-set-up-node-typescript-express/
@@ -156,6 +162,21 @@ f = open(f"{project_name}/src/index.ts", "w")
 f.write(entry_point_code)
 f.close()
 
+f = open(f"{project_name}/.env", "w")
+env_variables = """PORT=9000
+JWT_SECRET="ladjs8923newdknq(&87sd)7ds6&$fjsddsfgfhhb@@#$"
+
+# This was inserted by `prisma init`:
+# Environment variables declared in this file are automatically made available to Prisma.
+# See the documentation for more detail: https://pris.ly/d/prisma-schema#accessing-environment-variables-from-the-schema
+
+# Prisma supports the native connection string format for PostgreSQL, MySQL, SQLite, SQL Server, MongoDB and CockroachDB.
+# See the documentation for all the connection string options: https://pris.ly/d/connection-strings
+
+DATABASE_URL="file:./dev.db\""""
+f.write(env_variables)
+f.close()
+
 os.system(f"chmod +x {project_name}/run.sh")
 
-os.system(f"cd {project_name}; docker-compose up")
+os.system(f"cd {project_name}; npm run dev")
